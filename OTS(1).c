@@ -6,6 +6,7 @@
 #include "/usr/local/include/pbc/pbc.h"
 #include "/usr/local/include/pbc/pbc_test.h"
 #include <gmp.h>
+#include stdlib.h;
 #define NUM 100000
 
 long long jiecheng(int n) {
@@ -35,12 +36,16 @@ int main(int argc, char **argv) {
   element_t g,h;
   element_t temp,temp1,temp3,temp4;
   element_t bb2,bb3;
-  mpz_t qq;
-  element_t qq1;
+  mpz_t qq,temp2;
+  element_t qq1,ans2;
   double t0,t1,time;
   int i,j,l,y[19],d=19,k=9;
   unsigned long ans;
-
+  int d1[NUM];
+  for (i=0;i<NUM;i++)
+  {
+    d1[i]=rand();
+  }
 
   pbc_demo_pairing_init(pairing, argc, argv);//在pbc_test.h中定义也是以文件流的方式读入参数
   for(i=0;i<19;i++){
@@ -57,10 +62,12 @@ int main(int argc, char **argv) {
   mpz_init(bb1);
   element_init_Zr(bb2,pairing);  
   element_init_G1(bb3,pairing);  
-  element_init_Zr(qq1,pairing);
+  element_init_G1(qq1,pairing);
+  element_init_G1(ans2,pairing);
   mpz_init(qq);
   mpz_init(tk);
-
+  mpz_init(temp2);
+  mpz_set_ui(temp2,0);
   gmp_randinit_default(state);
   element_init_G1(g,pairing);
   element_init_G1(h,pairing);
@@ -115,43 +122,33 @@ int main(int argc, char **argv) {
 
 
   t0 = pbc_get_time();
-
- for(l=0;l<1000;l++){
-     element_set0(total2[NUM]);
-     mpz_set_ui(total1[NUM],0);
-  element_set1(temp3);
- for(j=0;j<NUM;j++){
+element_set1(qq1);
+for(j=0;j<NUM;j++){
   k=9;
   mpz_urandomb(tk,state,16);
+  element_set1(temp3);
+  element_mul_zn(temp4,d1[j],total2[j]);
+  element_add(temp1,temp1,temp4);
+  mpz_mul(qq,d1[j],total1[j]);
+  element_add(temp2,temp2,qq);
   for (i = 1; i <= d; i++) {
                 ans=cx(d-i,k);
 		if (mpz_cmp_ui(tk,ans)>=0) {
-			y[i - 1] = 1;
-                        mpz_sub_ui(tk,tk,ans);
+      element_mul(temp3,temp3,v[i])
+      mpz_sub_ui(tk,tk,ans);
 			k = k - 1;
 		}
 		else y[i - 1] = 0;
-   }
-
-  for(i=0;i<19;i++){
-     if(y[i]==0){
-       element_mul(temp3,temp3,v[i]);
-     }
   }
-  }
-
-  for(j=0;j<NUM;j++){
-    element_add(total2[NUM],total2[NUM],total2[j]);
-    mpz_add(total1[NUM],total1[NUM],total1[j]);
-  }
-  element_set_mpz(qq1,total1[NUM]);
+  element_pow_zn(temp3,temp3,d1[j]);
+  element_mul(qq1,qq1,temp3);
 }
-     element_pow_zn(temp,g,total2[NUM]);
-     element_pow_zn(temp1,h,qq1);
-     element_mul_zn(temp4,temp,temp1);
-
+  element_set1(ans2);
+  element_pow_zn(bb2,g,temp1);
+  element_pow_mpz(bb3,h,temp2);
+  element_mul_zn(ans2,bb2,bb3);
   t1 = pbc_get_time();
-  if(element_cmp(temp3,temp4)==0) printf("Valid!\n");
+  if(element_cmp(ans2,qq1)==0) printf("Valid!\n");
 
 
 
